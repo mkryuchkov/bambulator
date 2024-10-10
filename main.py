@@ -10,7 +10,7 @@ from aiogram.enums import ParseMode
 
 from bambu_connect import BambuClient
 
-from bot_handlers import dp
+from handlers import dp
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout,
                     format="%(asctime)s [%(levelname)s] [%(name)s → %(funcName)s()] %(message)s")
@@ -37,5 +37,5 @@ if __name__ == "__main__":
     try:
         logger.info("Starting")
         asyncio.run(main())
-    except asyncio.CancelledError:
+    except (asyncio.CancelledError, KeyboardInterrupt):
         logger.info("Stopped")
