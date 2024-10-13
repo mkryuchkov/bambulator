@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import logging
 import jsonpickle
 from aiogram import Bot, Dispatcher
@@ -6,7 +8,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.methods import SetMyCommands
 from aiogram.types import Message, BotCommand, BufferedInputFile, BotCommandScopeChat
 
-from bambu_connect import BambuClient
+from bambu_client import BambuClient
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ async def command_status(message: Message, bambu: BambuClient) -> None:
     """
     `/status` command
     """
-    json = jsonpickle.encode(bambu.watchClient.printerStatus, indent=4)
+    json = jsonpickle.encode(bambu.values, indent=4)
     await message.answer(f"```json\n{json}\n```")
 
 
@@ -35,7 +37,7 @@ async def command_photo(message: Message, bambu: BambuClient) -> None:
     """
     `/photo` command
     """
-    image = bambu.cameraClient.capture_frame()
+    image = bambu.capture_frame()
     await message.answer_photo(BufferedInputFile(image, "photo-moto"))
 
 
@@ -55,10 +57,7 @@ async def on_startup(bambu: BambuClient) -> None:
     Bot startup handler.
     Setup, initialize state, etc.
     """
-    bambu.start_watch_client(None, lambda: bambu.dump_info())
-    # bambu.start_camera_stream()
-
-    logger.info(f"Connected to {bambu.watchClient.hostname}")
+    bambu.start()
 
     SetMyCommands(commands=[
         BotCommand(command="start", description="Start bot"),
@@ -74,5 +73,4 @@ async def on_shutdown(bambu: BambuClient) -> None:
     Bot shutdown handler.
     Close connections, clean up.
     """
-    bambu.stop_watch_client()
-    logger.info("Disconnected")
+    bambu.stop()

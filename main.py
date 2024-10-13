@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import asyncio
 import logging
 import sys
@@ -8,7 +10,7 @@ from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-from bambu_connect import BambuClient
+from bambu_client import BambuClient
 
 from handlers import dp
 
