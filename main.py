@@ -24,9 +24,11 @@ TOKEN = os.getenv('BOT_TOKEN')
 HOSTNAME = os.getenv('HOSTNAME')
 ACCESS_CODE = os.getenv('ACCESS_CODE')
 SERIAL = os.getenv('SERIAL')
+CHAT_ID = int(os.getenv('CHAT_ID'))
 
 
 async def main() -> None:
+    dp["chat_id"] = CHAT_ID
     bambu_client = BambuClient(HOSTNAME, ACCESS_CODE, SERIAL)
     dp["bambu"] = bambu_client
 

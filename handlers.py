@@ -2,6 +2,7 @@
 
 import logging
 import jsonpickle
+from typing import Any, Awaitable, Callable, Dict, Optional
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
@@ -20,6 +21,7 @@ async def command_start_handler(message: Message) -> None:
     """
     `/start` command
     """
+    # todo: authorization
     await message.answer(f"Hello, {message.from_user.full_name}\\!", parse_mode=ParseMode.MARKDOWN_V2)
 
 
@@ -37,7 +39,7 @@ async def command_photo(message: Message, bambu: BambuClient) -> None:
     """
     `/photo` command
     """
-    image = bambu.camera.image_buffer[-1]
+    image = bambu.camera.image_buffer[-1] if bambu.camera.image_buffer else None
 
     if not image:
         await message.answer("No image")
@@ -64,6 +66,7 @@ async def on_startup(bambu: BambuClient) -> None:
     """
     bambu.start()
 
+    # todo: make buttons menu: status / ... / stop
     SetMyCommands(commands=[
         BotCommand(command="start", description="Start bot"),
         BotCommand(command="status", description="Check printer status"),
@@ -79,3 +82,18 @@ async def on_shutdown(bambu: BambuClient) -> None:
     Close connections, clean up.
     """
     bambu.stop()
+
+
+@dp.message.middleware()
+async def auth_middleware(
+    handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+    message: Message,
+    state: Dict[str, Any]
+) -> Any:
+    """
+    Chat id based auth.
+    """
+    if state["chat_id"] == message.chat.id:
+        return await handler(message, state)
+    else:
+        return await message.answer(f"__*ACCESS DENIED*__\nchat id: `{message.chat.id}`")

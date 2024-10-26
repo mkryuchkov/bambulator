@@ -12,7 +12,7 @@ import socket
 import ssl
 import time
 import threading
-from typing import Any, Callable, Dict, Optional
+from typing import Callable, Optional
 
 JPEG_START = bytearray([0xff, 0xd8, 0xff, 0xe0])
 JPEG_END = bytearray([0xff, 0xd9])
@@ -30,7 +30,7 @@ class BambuCameraClient:
         self.image_callback = None
         self.image_buffer = collections.deque(maxlen=10)
 
-    def __create_auth_packet__(self, username="bblp", access_code=None):
+    def __create_auth_packet__(self, username: str = "bblp", access_code: str = None):
         auth_data = bytearray()
         auth_data += struct.pack("<I", 0x40)  # '@'\0\0\0
         auth_data += struct.pack("<I", 0x3000)  # \0'0'\0\0

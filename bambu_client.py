@@ -9,7 +9,7 @@ import json
 import logging
 import socket
 import ssl
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 
 import paho.mqtt.client as mqtt
 
