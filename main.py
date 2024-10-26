@@ -15,7 +15,7 @@ from bambu_client import BambuClient
 from handlers import dp
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout,
-                    format="%(asctime)s [%(levelname)s] [%(name)s → %(funcName)s()] %(message)s")
+                    format="%(asctime)s [%(levelname)s] [%(name)s:%(lineno)d → %(funcName)s()] %(message)s")
 logger = logging.getLogger(__name__)
 
 load_dotenv()

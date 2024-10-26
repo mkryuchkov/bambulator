@@ -28,7 +28,7 @@ async def command_status(message: Message, bambu: BambuClient) -> None:
     """
     `/status` command
     """
-    json = jsonpickle.encode(bambu.values, indent=4)
+    json = jsonpickle.encode(bambu.info, indent=4)
     await message.answer(f"```json\n{json}\n```")
 
 
@@ -37,7 +37,12 @@ async def command_photo(message: Message, bambu: BambuClient) -> None:
     """
     `/photo` command
     """
-    image = bambu.capture_frame()
+    image = bambu.camera.image_buffer[-1]
+
+    if not image:
+        await message.answer("No image")
+        return
+
     await message.answer_photo(BufferedInputFile(image, "photo-moto"))
 
 

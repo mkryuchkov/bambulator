@@ -4,6 +4,7 @@ Bambu printer client and monitor.
 Based on https://github.com/mattcar15/bambu-connect by Matt Carroll.
 """
 
+import datetime
 import json
 import logging
 import socket
@@ -11,6 +12,8 @@ import ssl
 from typing import Any, Callable, Dict, Optional
 
 import paho.mqtt.client as mqtt
+
+from bambu_camera_client import BambuCameraClient
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +25,11 @@ class BambuClient:
         self.hostname = hostname
         self.serial = serial
         self.mqtt_port = 8883
-        self.client = self.__setup_mqtt_client__(access_code)
-        self.values = {}
+        self.mqtt = self.__setup_mqtt_client__(access_code)
+        self.info = {}
+        self.info_ts = None
         self.message_callback = None
+        self.camera = BambuCameraClient(hostname, access_code)
 
     def __setup_mqtt_client__(self, access_code: str) -> mqtt.Client:
         client = mqtt.Client(
@@ -45,13 +50,15 @@ class BambuClient:
         """Start printer client and connect."""
         self.message_callback = message_callback
 
-        self.client.connect_async(self.hostname, self.mqtt_port, 60)
-        self.client.loop_start()
+        self.mqtt.connect_async(self.hostname, self.mqtt_port, 60)
+        self.mqtt.loop_start()
+        self.camera.start()  # todo: image_callback
 
     def stop(self) -> None:
         """Stop printer client."""
-        self.client.disconnect()
-        self.client.loop_stop()
+        self.mqtt.disconnect()
+        self.mqtt.loop_stop()
+        self.camera.stop()
 
     def _on_connect_cb_(self, client: mqtt.Client, *_) -> None:
         """Handles on_connect event."""
@@ -67,20 +74,21 @@ class BambuClient:
             if not doc:
                 return
 
-            self.values = dict(self.values, **doc["print"])
+            self.info = dict(self.info, **doc["print"])
+            self.info_ts = datetime.datetime.now(datetime.UTC)
 
             if self.message_callback:
-                self.message_callback(self.values)
+                self.message_callback(self.info)
 
         except KeyError as err:
             logger.error(f"Message receiving error: {err}")
 
-    def _on_connect_fail_cb_(self, client: mqtt.Client, userdata: Any) -> None:
+    def _on_connect_fail_cb_(self, client: mqtt.Client, _: Any) -> None:
         logger.info("Connection failed")
 
     def _on_disconnect_cb_(self,
                            client: mqtt.Client,
-                           userdata: Any,
+                           _: Any,
                            code: mqtt.MQTTErrorCode) -> None:
         logger.info(f"Disconnected: {code.name}")
 
@@ -95,8 +103,8 @@ class BambuClient:
     def send_command(self, payload) -> None:
         """Send mqtt sommand to printer."""
         # todo: check if valid condition
-        if (self.client.is_connected()):
-            self.client.publish(f"device/{self.serial}/request", payload)
+        if (self.mqtt.is_connected()):
+            self.mqtt.publish(f"device/{self.serial}/request", payload)
         else:
             logger.warning("Can't send command without active connection")
 
