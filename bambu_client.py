@@ -9,7 +9,7 @@ import json
 import logging
 import socket
 import ssl
-from typing import Any, Callable, Optional
+from typing import Any, Awaitable, Callable, Optional
 
 import paho.mqtt.client as mqtt
 
@@ -28,8 +28,9 @@ class BambuClient:
         self.mqtt = self.__setup_mqtt_client__(access_code)
         self.info = {}
         self.info_ts = None
-        self.message_callback = None
         self.camera = BambuCameraClient(hostname, access_code)
+        self.on_connected = None
+        self.on_disconnected = None
 
     def __setup_mqtt_client__(self, access_code: str) -> mqtt.Client:
         client = mqtt.Client(
@@ -38,21 +39,16 @@ class BambuClient:
         client.tls_set(tls_version=ssl.PROTOCOL_TLS, cert_reqs=ssl.CERT_NONE)
         client.tls_insecure_set(True)
         client.on_connect = self._on_connect_cb_
-        client.on_message = self._on_message_cb_  # todo: make ext cb
+        client.on_message = self._on_message_cb_
         client.on_connect_fail = self._on_connect_fail_cb_
-        client.on_disconnect = self._on_disconnect_cb_  # todo: make ext cb
+        client.on_disconnect = self._on_disconnect_cb_
         return client
 
-    def start(
-        self,
-        message_callback: Optional[Callable[[dict], None]] = None
-    ) -> None:
+    def start(self) -> None:
         """Start printer client and connect."""
-        self.message_callback = message_callback
-
         self.mqtt.connect_async(self.hostname, self.mqtt_port, 60)
         self.mqtt.loop_start()
-        self.camera.start()  # todo: image_callback
+        self.camera.start()
 
     def stop(self) -> None:
         """Stop printer client."""
@@ -62,7 +58,6 @@ class BambuClient:
 
     def _on_connect_cb_(self, client: mqtt.Client, *_) -> None:
         """Handles on_connect event."""
-        # listen to stats responses
         client.subscribe(f"device/{self.serial}/report")
         logger.info(f"Connected to {self.hostname}")
         self._send_push_stats_command_()
@@ -76,9 +71,6 @@ class BambuClient:
 
             self.info = dict(self.info, **doc["print"])
             self.info_ts = datetime.datetime.now(datetime.UTC)
-
-            if self.message_callback:
-                self.message_callback(self.info)
 
         except KeyError as err:
             logger.error(f"Message receiving error: {err}")

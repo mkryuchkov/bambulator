@@ -48,7 +48,7 @@ class BambuCameraClient:
 
     def start(self, image_callback: Optional[Callable[[bytearray], None]] = None):
         if self.streaming:
-            logger.warning("Stream already running")
+            logger.warning("Stream is already running")
             return
 
         self.image_callback = image_callback
