@@ -98,7 +98,7 @@ class BambuCameraClient:
         current_image = None
         payload_size = 0
 
-        while True:
+        while self.streaming:
             try:
                 chunk = sock.recv(4096)
             except ssl.SSLWantReadError:
