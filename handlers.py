@@ -32,7 +32,7 @@ async def command_start_handler(message: Message) -> None:
     `/start` command
     """
     # todo: authorization
-    await message.answer(f"Hello, {message.from_user.full_name}\\!", parse_mode=ParseMode.MARKDOWN_V2)
+    await message.answer(f"Hello, {message.from_user.full_name}\\!")
 
 
 @dp.message(Command("status"))
@@ -40,16 +40,8 @@ async def command_status(message: Message, bambu: BambuClient) -> None:
     """
     `/status` command
     """
-    status = {
-        bambu.info['wifi_signal'],
-        bambu.info['nozzle_temper'],
-        bambu.info['bed_temper'],
-        bambu.info['gcode_state'],
-        bambu.info['print_type'],
-        bambu.info['sequence_id'],
-    }
-    json = jsonpickle.encode(status, indent=4, unpicklable=False)
-    await message.answer(f"ts: `{bambu.info_ts}`\n```json\n{json}\n```")
+    json = jsonpickle.encode(bambu.info, indent=4, unpicklable=False)
+    await message.answer(f"ts: `{bambu.info.ts}`\n```json\n{json}\n```")
 
 
 @dp.message(Command("photo"))

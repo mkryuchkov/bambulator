@@ -11,6 +11,7 @@ import logging
 import math
 import socket
 import ssl
+from types import SimpleNamespace
 
 from aiomqtt import Client, MqttError, TLSParameters
 
@@ -27,7 +28,7 @@ class BambuClient:
         self.access_code = access_code
         self.report_topic = f"device/{serial}/report"
         self.request_topic = f"device/{serial}/request"
-        self.info = {}
+        self.info = None
         self.info_ts = None
         self.running = False
         self.camera = BambuCameraClient(hostname, access_code)
@@ -54,13 +55,14 @@ class BambuClient:
                     logger.info(f"Connected to {client._hostname}")
 
                     async for message in client.messages:
-                        # todo: q: partial data // custom state type
-                        # todo: async callback -> (current, diff)
-                        doc = json.loads(message.payload)
-                        if doc:
-                            # todo: could be no info // unhandled exception <class 'KeyError'> Args: 'print'
-                            self.info = dict(self.info, **doc["print"])
-                            self.info_ts = datetime.datetime.now(datetime.UTC)
+                        doc = json.loads(
+                            message.payload, object_hook=lambda d: SimpleNamespace(**d))
+
+                        if doc.print:
+                            self.info = doc.print
+                            self.info.ts = datetime.datetime.now(datetime.UTC)
+
+                            # todo: async callback -> (current, diff)
 
                         await client.publish(self.request_topic, '{"pushing": { "sequence_id": 1, "command": "pushall"}, "user_id":"1234567890"}')
 

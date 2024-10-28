@@ -54,7 +54,7 @@ class BambuCameraClient:
         """Image capture loop"""
         while self.streaming:
             try:
-                async with asyncio.timeout(2):
+                async with asyncio.timeout(5):
                     reader, writer = await asyncio.open_connection(
                         self.hostname, self.port, limit=256000)
                     await writer.start_tls(self.ssl_ctx, server_hostname=self.hostname)
@@ -72,7 +72,9 @@ class BambuCameraClient:
                     else:
                         logger.warning(f"Shit in buffer; len={len(buffer)}")
 
-            # todo: TimeoutError from asyncio.timeout
+            except TimeoutError:
+                logger.warning(f"Connection lost")
+
             except Exception as e:
                 logger.error(f"Unhandled exception. Type: {type(e)} Args: {e}")
 
