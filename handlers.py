@@ -1,5 +1,9 @@
 #!/usr/bin/env python
+"""
+Telgram bot message handlers.
+"""
 
+import asyncio
 import logging
 import jsonpickle
 from typing import Any, Awaitable, Callable, Dict, Optional
@@ -14,6 +18,12 @@ from bambu_client import BambuClient
 logger = logging.getLogger(__name__)
 
 dp = Dispatcher()
+
+# todo: handle printer offline state
+# todo: send messages on printer events
+# todo: reconnect command
+# todo: nice status message
+# todo: gif from image buffer
 
 
 @dp.message(CommandStart())
@@ -30,7 +40,15 @@ async def command_status(message: Message, bambu: BambuClient) -> None:
     """
     `/status` command
     """
-    json = jsonpickle.encode(bambu.info, indent=4)
+    status = {
+        bambu.info['wifi_signal'],
+        bambu.info['nozzle_temper'],
+        bambu.info['bed_temper'],
+        bambu.info['gcode_state'],
+        bambu.info['print_type'],
+        bambu.info['sequence_id'],
+    }
+    json = jsonpickle.encode(status, indent=4, unpicklable=False)
     await message.answer(f"ts: `{bambu.info_ts}`\n```json\n{json}\n```")
 
 
@@ -85,7 +103,7 @@ async def on_shutdown(bambu: BambuClient) -> None:
     Bot shutdown handler.
     Close connections, clean up.
     """
-    bambu.stop()
+    await bambu.stop()
 
 
 @dp.message.middleware()

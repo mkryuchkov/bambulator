@@ -18,6 +18,10 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout,
                     format="%(asctime)s [%(levelname)s] [%(name)s:%(lineno)d → %(funcName)s()] %(message)s")
 logger = logging.getLogger(__name__)
 
+if sys.platform.lower() == "win32" or os.name.lower() == "nt":
+    from asyncio import set_event_loop_policy, WindowsSelectorEventLoopPolicy
+    set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+
 load_dotenv()
 
 TOKEN = os.getenv('BOT_TOKEN')
